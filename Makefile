@@ -1,6 +1,7 @@
 # Compiler options
 CC = gcc
 CFLAGS = -Wall -std=c99 -g
+LIB_FLAGS = -ldl
 ILLEGAL_FLAGS = -Wno-unknown-pragmas
 
 # Project folders
@@ -30,7 +31,7 @@ build_library: $(BUILD_FOLDER)/$(LIBRARY)
 
 build_malware:
 	cd $(TESTS_FOLDER)
-	$(CC) $(CFLAGS) $(ILLEGAL_FLAGS) $(MALWARE_SOURCE) ../$(BUILD_FOLDER)/$(LIBRARY) -o $(MALWARE)
+	$(CC) $(CFLAGS) $(LIB_FLAGS) $(ILLEGAL_FLAGS) $(MALWARE_SOURCE) ../$(BUILD_FOLDER)/$(LIBRARY) -o $(MALWARE)
 	mv $(MALWARE) ../
 	cd ../
 

@@ -1,6 +1,7 @@
 #ifdef __linux__
 
 #include <stdlib.h>
+#include <dlfcn.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -59,6 +60,38 @@ int _get_architecture_bits(){
 bool _check_root(){
 
 	return (geteuid() == 0);
+
+}
+
+int _load_library(const char *lib_name, void **handle){
+
+	// Open library and verify it
+	*handle = dlopen(lib_name, RTLD_LAZY);
+
+	// Return
+	return 0;
+
+}
+
+int _get_function_pointer(void *handle, const char *func_name, FUNC_PTR *func_ptr, char *error){
+
+	// Get symbol and init error
+	*func_ptr = (FUNC_PTR)dlsym(handle, func_name);
+	error = dlerror();
+
+	// Return
+	return 0;
+
+}
+
+int _close_handle(void **handle){
+
+	// Close library handle
+	dlclose(*handle);
+	*handle = NULL;
+
+	// Return
+	return 0;
 
 }
 

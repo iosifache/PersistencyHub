@@ -18,6 +18,17 @@
 
 	#define                 MAX_MODULES                         32
 
+	#define                 FUNC_NAME_CHECK_COMPATIBILIY        "check_compatibility"
+	#define                 FUNC_NAME_EXPLOIT                   "exploit"
+	#define                 FUNC_NAME_CHECK_INSTALLED           "check_installed"
+	#define                 FUNC_NAME_DELETE_INSTALLED          "delete_installed"
+
+#pragma endregion
+
+#pragma region TypeDefs
+
+	typedef                 int (*MODULE_FUNC)(void);
+
 #pragma endregion
 
 #pragma region Enumerations
@@ -51,7 +62,16 @@
 		char **names;
 	} MODULE_WALLET;
 
-#pragma 
+	typedef struct{
+		char *name;
+		void *handle;
+		MODULE_FUNC check_compatibility;
+		MODULE_FUNC exploit;
+		MODULE_FUNC check_installed;
+		MODULE_FUNC delete_installed;
+	} LOADED_MODULE;
+
+#pragma
 
 #pragma region ExportedFunctions
 
@@ -99,6 +119,32 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int free_module_wallet(MODULE_WALLET **wallet);
+
+	/**
+	 * @brief Verify if a module is installed in the toolkit
+	 * 
+	 * @param wallet The module wallet, preloaded with all the modules
+	 * @param name The name of the module that will be 
+	 * @return bool Negative if not found and positive(or zero) if found, more exactly the index in the wallet
+	 */
+	int is_module_present(MODULE_WALLET *wallet, const char *name);
+
+	/**
+	 * @brief Load a module in the memory
+	 * 
+	 * @param module The location where the module will be loaded
+	 * @param name The nme of the module
+	 * @return int Zero if success, non-zero if error
+	 */
+	int load_module(LOADED_MODULE **module, const char *name);
+
+	/**
+	 * @brief Unlink a module
+	 * 
+	 * @param module The loaded module that need to be unlinked
+	 * @return int Zero if success, non-zero if error
+	 */
+	int unlink_module(LOADED_MODULE **module);
 
 #pragma endregion
 

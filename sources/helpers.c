@@ -5,7 +5,6 @@
 #include <sys/utsname.h>
 #include "../headers/percistency_hub.h"
 #include "../headers/helpers.h"
-#include "../headers/platform_dependent.h"
 #include "../headers/errors.h"
 
 int copy_string(char **dest, const char *src){
@@ -95,5 +94,52 @@ int get_system_details(SYSTEM_DETAILS detail, void *result){
 
 	// Return
 	return ret_val;
+
+}
+
+int load_library(const char *lib_name, void **handle){
+
+	// Allocate the new handle
+	if (*handle != NULL)
+		free(*handle);
+	*handle = (void *)malloc(sizeof(void *));
+	if (*handle == NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+
+	// Open the library and check the operation
+	_load_library(lib_name, handle);
+	if (*handle == NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_LOAD_LIB;
+
+	// Return
+	return 0;
+
+}
+
+int get_function_pointer(void *handle, const char *func_name, FUNC_PTR *func_ptr){
+
+	char *error = NULL;
+
+	// Checl arguments
+	if (handle == NULL || func_name == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
+
+	// Get a pointer to function
+	_get_function_pointer(handle, func_name, func_ptr, error);
+	if (error != NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_FIND_FUNC;
+
+	// Return
+	return 0;
+
+}
+
+int close_handle(void **handle){
+
+	// Close handle
+	_close_handle(handle);
+
+	// Return
+	return 0;
 
 }

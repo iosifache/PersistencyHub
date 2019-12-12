@@ -85,7 +85,8 @@ int get_all_modules(MODULE_WALLET **wallet){
 	// Process the filenames
 	for (i = 0; i < (*wallet)->count; i++){
 		extension_ptr = strstr(((*wallet)->names)[i], MODULE_EXTENSION);
-		*extension_ptr = '\0';
+		if (extension_ptr != NULL)
+			*extension_ptr = '\0';
 	}
 
 	// Return
@@ -106,6 +107,76 @@ int free_module_wallet(MODULE_WALLET **wallet){
 		*wallet = NULL;
 	}
 	
+	// Return
+	return 0;
+
+}
+
+int is_module_present(MODULE_WALLET *wallet, const char *name){
+
+	int i;
+
+	// Check arguments
+	if (wallet == NULL || name == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
+
+	// Iterate the wallet
+	for (i = 0; i < wallet->count; i++){
+		if (strcmp(wallet->names[i], name) == 0)
+			return i;
+	}
+
+	// Return
+	return ERROR_MODULE_MANAGER_NOT_FOUND;
+
+}
+
+int load_module(LOADED_MODULE **module, const char *name){
+
+	int error;
+
+	// Allocate the module
+	if (*module != NULL)
+		free(*module);
+	*module = (LOADED_MODULE *)malloc(sizeof(LOADED_MODULE));
+
+	// Load module
+	error = load_library(name, &(*module)->handle);
+	if (error != 0)
+		return error;
+
+	// Copy the name
+	copy_string(&(*module)->name, name);
+
+	// Get function pointers
+	error = get_function_pointer((*module)->handle, FUNC_NAME_CHECK_COMPATIBILIY, &(*module)->check_compatibility);
+	if (error != 0)
+		return error;
+	error = get_function_pointer((*module)->handle, FUNC_NAME_EXPLOIT, &(*module)->exploit);
+	if (error != 0)
+		return error;
+	error = get_function_pointer((*module)->handle, FUNC_NAME_CHECK_INSTALLED, &(*module)->check_installed);
+	if (error != 0)
+		return error;
+	error = get_function_pointer((*module)->handle, FUNC_NAME_DELETE_INSTALLED, &(*module)->check_compatibility);
+	if (error != 0)
+		return error;
+
+	// Return
+	return 0;
+
+}
+
+int unlink_module(LOADED_MODULE **module){
+
+	// Unlink the handle
+	close_handle((*module)->handle);
+
+	// Free
+	free((*module)->name);
+	free(*module);
+	*module = NULL;
+
 	// Return
 	return 0;
 
