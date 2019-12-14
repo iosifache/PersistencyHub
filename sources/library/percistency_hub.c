@@ -1,18 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../headers/percistency_hub.h"
-#include "../headers/helpers.h"
-#include "../headers/errors.h"
+#include "../../headers/library/percistency_hub.h"
+#include "../../headers/helpers/helpers.h"
+#include "../../headers/errors.h"
 
-int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *path_to_malware){
+#pragma region Environment
 
-	int is_error;
+int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware){
+
+	int error;
 
 	// Allocate the ENVIRONMENT object
 	if (*env != NULL)
 		free(*env);
-	*env = (ENVIRONMENT *)malloc(sizeof(ENVIRONMENT));
+	*env = (ENVIRONMENT *)calloc(1, sizeof(ENVIRONMENT));
 	if (env == NULL)
 		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
 
@@ -22,16 +24,25 @@ int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, R
 	(*env)->is_root = is_root;
 
 	// Copy the malware path
-	is_error = copy_string(&(*env)->malware_path, path_to_malware);
-	if (is_error != 0)
-		return is_error;
+	error = copy_string(&(*env)->malware_path, abs_path_to_malware, 0);
+	if (error != 0)
+		return error;
+
+	// Copy the parent path
+	error = copy_string(&(*env)->working_directory, abs_path_to_malware, 0);
+	if (error != 0)
+		return error;
+	get_parent_folder_path((*env)->working_directory);
+
+	// Change directory
+	change_working_directory((*env)->working_directory);
 
 	// Return
 	return 0;
 
 }
 
-int autoset_environment(ENVIRONMENT **env, const char *path_to_malware){
+int autoset_environment(ENVIRONMENT **env, const char *abs_path_to_malware){
 
 	ARCHITECTURE arch;
 	ROOTED_STATE is_root;
@@ -48,7 +59,7 @@ int autoset_environment(ENVIRONMENT **env, const char *path_to_malware){
 		return is_error;
 
 	// Init the environment
-	return set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, path_to_malware);
+	return set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, abs_path_to_malware);
 
 }
 
@@ -57,6 +68,7 @@ int free_environment(ENVIRONMENT **env){
 	// Free members and objects
 	if (*env != NULL){
 		free((*env)->malware_path);
+		free((*env)->working_directory);
 		free(*env);
 		*env = NULL;
 	}
@@ -65,6 +77,10 @@ int free_environment(ENVIRONMENT **env){
 	return 0;
 
 }
+
+#pragma endregion
+
+#pragma region ModuleWallet
 
 int get_all_modules(MODULE_WALLET **wallet){
 
@@ -75,7 +91,7 @@ int get_all_modules(MODULE_WALLET **wallet){
 	if (*wallet != NULL){
 		free(*wallet);
 	}
-	*wallet = (MODULE_WALLET *)malloc(sizeof(MODULE_WALLET));
+	*wallet = (MODULE_WALLET *)calloc(1, sizeof(MODULE_WALLET));
 
 	// Get all filenames
 	is_error = get_all_files_from_folder(MODULES_FOLDER, &(*wallet)->count, &(*wallet)->names, MAX_MODULES);
@@ -112,6 +128,10 @@ int free_module_wallet(MODULE_WALLET **wallet){
 
 }
 
+#pragma endregion
+
+#pragma region Module
+
 int is_module_present(MODULE_WALLET *wallet, const char *name){
 
 	int i;
@@ -138,27 +158,30 @@ int load_module(LOADED_MODULE **module, const char *name){
 	// Allocate the module
 	if (*module != NULL)
 		free(*module);
-	*module = (LOADED_MODULE *)malloc(sizeof(LOADED_MODULE));
+	*module = (LOADED_MODULE *)calloc(1, sizeof(LOADED_MODULE));
+
+	// Copy the name and add extension
+	error = copy_string(&(*module)->name, name, 3);
+	if (error != 0)
+		return error;
+	strcat((*module)->name, MODULE_EXTENSION);
 
 	// Load module
-	error = load_library(name, &(*module)->handle);
+	error = load_library((*module)->name, &(*module)->handle);
 	if (error != 0)
 		return error;
 
-	// Copy the name
-	copy_string(&(*module)->name, name);
-
 	// Get function pointers
-	error = get_function_pointer((*module)->handle, FUNC_NAME_CHECK_COMPATIBILIY, &(*module)->check_compatibility);
+	error = get_function_pointer((*module)->handle, FUNC_NAME_IS_COMPATIBLE, &(*module)->is_compatible);
 	if (error != 0)
 		return error;
 	error = get_function_pointer((*module)->handle, FUNC_NAME_EXPLOIT, &(*module)->exploit);
 	if (error != 0)
 		return error;
-	error = get_function_pointer((*module)->handle, FUNC_NAME_CHECK_INSTALLED, &(*module)->check_installed);
+	error = get_function_pointer((*module)->handle, FUNC_NAME_IS_INSTALLED, &(*module)->is_installed);
 	if (error != 0)
 		return error;
-	error = get_function_pointer((*module)->handle, FUNC_NAME_DELETE_INSTALLED, &(*module)->check_compatibility);
+	error = get_function_pointer((*module)->handle, FUNC_NAME_DELETE_INSTALLED, &(*module)->delete_installed);
 	if (error != 0)
 		return error;
 
@@ -170,7 +193,7 @@ int load_module(LOADED_MODULE **module, const char *name){
 int unlink_module(LOADED_MODULE **module){
 
 	// Unlink the handle
-	close_handle((*module)->handle);
+	unlink_library((*module)->handle);
 
 	// Free
 	free((*module)->name);
@@ -181,3 +204,5 @@ int unlink_module(LOADED_MODULE **module){
 	return 0;
 
 }
+
+#pragma endregion

