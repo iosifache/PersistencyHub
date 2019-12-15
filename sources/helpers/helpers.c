@@ -137,7 +137,7 @@ int unlink_library(void **handle){
 
 #pragma region FileSystem
 
-int get_all_files_from_folder(const char *path_to_folder, int *file_count, char ***filenames, int max_files){
+int get_all_files_from_folder(const char *path_to_folder, int *file_count, char ***filenames, int max_files, const char *extension){
 
 	int ret_val;
 
@@ -147,7 +147,7 @@ int get_all_files_from_folder(const char *path_to_folder, int *file_count, char 
 		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
 
 	// Open folder
-	ret_val = _get_all_files_from_folder(path_to_folder, file_count, *filenames, max_files);
+	ret_val = _get_all_files_from_folder(path_to_folder, file_count, *filenames, max_files, extension);
 
 	// Return
 	return ret_val;

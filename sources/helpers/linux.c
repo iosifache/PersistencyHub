@@ -1,6 +1,7 @@
 #ifdef __linux__
 
 #include <stdlib.h>
+#include <string.h>
 #include <dlfcn.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -11,6 +12,12 @@
 #include "../../headers/helpers/platform_dependent.h"
 #include "../../headers/helpers/helpers.h"
 #include "../../headers/errors.h"
+
+#pragma region ForwardDeclarations
+
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+
+#pragma endregion
 
 #pragma region System
 
@@ -121,17 +128,22 @@ int _change_working_directory(const char *path){
 
 }
 
-int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char **filenames, int max_files){
+int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char **filenames, int max_files, const char *extension){
 
 	DIR *folder;
 	struct dirent *file;
+	char *ext_ptr;
 	int index = 0;
-	int error;
+	int ext_length, error;
 
 	// Open folder
 	folder = opendir(path_to_folder);
 	if (folder == NULL)
 		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FOLDER;
+
+	// Get extension length
+	if (extension != NULL)
+		ext_length = strlen(extension);
 
 	// Get all files
 	while ((file = readdir(folder)) != NULL){
@@ -142,6 +154,13 @@ int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char
 			// Verify number of files
 			if (index >= max_files)
 				break;
+
+			// Verify extension
+			if (extension != NULL){
+				ext_ptr = strstr(file->d_name, extension);
+				if (ext_ptr == NULL || strlen(ext_ptr) != ext_length)
+					continue;
+			}
 
 			// Allocate the new filename
 			error = copy_string(&filenames[index], file->d_name, 0);

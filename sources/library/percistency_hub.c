@@ -13,7 +13,7 @@ int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, R
 
 	// Allocate the ENVIRONMENT object
 	if (*env != NULL)
-		free(*env);
+		free_environment(env);
 	*env = (ENVIRONMENT *)calloc(1, sizeof(ENVIRONMENT));
 	if (env == NULL)
 		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
@@ -104,7 +104,7 @@ int get_all_modules(MODULE_WALLET **wallet){
 	*wallet = (MODULE_WALLET *)calloc(1, sizeof(MODULE_WALLET));
 
 	// Get all filenames
-	is_error = get_all_files_from_folder(MODULES_FOLDER, &(*wallet)->count, &(*wallet)->names, MAX_MODULES);
+	is_error = get_all_files_from_folder(MODULES_FOLDER, &(*wallet)->count, &(*wallet)->names, MAX_MODULES, MODULE_EXTENSION);
 	if (is_error != 0)
 		return is_error;
 

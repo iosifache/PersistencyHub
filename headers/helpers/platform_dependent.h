@@ -132,9 +132,10 @@
 	 * @param file_count The number of finded files
 	 * @param filenames Array containing all the filenames, max MAX_FILES_IN_FOLDER
 	 * @param max_files Maximum number of files in that folder
+	 * @param extension The extension of the checked files
 	 * @return int Zero if success, non-zero if error
 	 */
-	int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char **filenames, int max_files);
+	int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char **filenames, int max_files, const char *extension);
 
 	/**
 	 * @brief Check the privilege of a file
