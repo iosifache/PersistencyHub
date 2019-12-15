@@ -47,6 +47,14 @@
 	 */
 	int get_user_home_directory(char **path);
 
+	/**
+	 * @brief Get the executable path
+	 * 
+	 * @param buffer The buffer where the location will be stored
+	 * @return int Zero if success, non-zero if error
+	 */
+	int get_executable_path(char **path);
+
 	#pragma endregion
 
 	#pragma region SharedLibraries

@@ -95,13 +95,12 @@
 	int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware);
 
 	/**
-	 * @brief Automatically set the machine details
+	 * @brief Automatically set the machine details and the malware path
 	 * 
 	 * @param env The environment object that will be setted
-	 * @param abs_path_to_malware Absolute path to the malware that need to gain persistency
 	 * @return int Zero if success, non-zero if error
 	 */
-	int autoset_environment(ENVIRONMENT **env, const char *abs_path_to_malware);
+	int autoset_environment(ENVIRONMENT **env);
 
 	/**
 	 * @brief Free the already setted environment

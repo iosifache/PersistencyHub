@@ -67,11 +67,17 @@ int get_system_details(SYSTEM_DETAILS detail, void *result){
 
 }
 
-
 int get_user_home_directory(char **path){
 
 	// Return
 	return _get_user_home_directory(path);
+
+}
+
+int get_executable_path(char **path){
+
+	// Return
+	return _get_executable_path(path);
 
 }
 

@@ -5,13 +5,12 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include "../../headers/helpers/platform_dependent.h"
 #include "../../headers/helpers/helpers.h"
 #include "../../headers/errors.h"
-
-#include <stdio.h>
 
 #pragma region System
 
@@ -40,6 +39,28 @@ int _get_user_home_directory(char **path){
 
 	// Copy the path and free the allocated structure
 	copy_string(path, pw->pw_dir, 0);
+
+	// Return
+	return 0;
+
+}
+
+int _get_executable_path(char **buffer){
+
+	int path_length;
+
+	// Allocate buffer
+	if (*buffer != NULL)
+		free(*buffer);
+	*buffer = (char *)malloc(MAX_PATH_LENGTH);
+	if (*buffer == NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+
+	// Get path
+	path_length = readlink(SELF_EXECUTABLE_PATH, *buffer, MAX_PATH_LENGTH);
+	if (path_length < 0)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_GET_INFO;
+	(*buffer)[path_length] = '\0';
 
 	// Return
 	return 0;

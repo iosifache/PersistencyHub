@@ -42,10 +42,11 @@ int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, R
 
 }
 
-int autoset_environment(ENVIRONMENT **env, const char *abs_path_to_malware){
+int autoset_environment(ENVIRONMENT **env){
 
 	ARCHITECTURE arch;
 	ROOTED_STATE is_root;
+	char *malware_path = NULL;
 	int is_error;
 
 	// Get architecture
@@ -58,8 +59,17 @@ int autoset_environment(ENVIRONMENT **env, const char *abs_path_to_malware){
 	if (is_error != 0)
 		return is_error;
 
+	// Get path
+	is_error = get_executable_path(&malware_path);
+	if (is_error != 0)
+		return is_error;
+
 	// Init the environment
-	return set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, abs_path_to_malware);
+	is_error = set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, malware_path);
+	free(malware_path);
+
+	// Return
+	return is_error;
 
 }
 

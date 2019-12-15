@@ -17,7 +17,9 @@
 	#ifdef __linux__
 
 		#define                 PATH_SEPARATOR                      "/"
+		#define                 MAX_PATH_LENGTH                     64
 		#define                 DT_REG                              8
+		#define                 SELF_EXECUTABLE_PATH                "/proc/self/exe"
 
 	#elif _WIN32
 
@@ -72,6 +74,14 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int _get_user_home_directory(char **path);
+
+	/**
+	 * @brief Get the executable path
+	 * 
+	 * @param buffer The buffer where the location will be stored
+	 * @return int Zero if success, non-zero if error
+	 */
+	int _get_executable_path(char **buffer);
 
 	#pragma endregion
 
