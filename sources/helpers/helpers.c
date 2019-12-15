@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -212,7 +213,7 @@ int create_file(const char *path, const char *content){
 	file = fopen(path, "w");
 	if (file == NULL)
 		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FILE;
-	
+
 	// Write content and close
 	fwrite(content, strlen(content), 1, file);
 	fclose(file);
@@ -244,7 +245,7 @@ int get_file_content(const char *path, char **buffer){
 
 	// Allocate buffer
 	*buffer = (char *)malloc((length + 1) * sizeof(char));
-	fseek(file, 0, SEEK_SET); 
+	fseek(file, 0, SEEK_SET);
 	fread(*buffer, length, 1, file);
 	(*buffer)[length] = '\0';
 
@@ -293,6 +294,68 @@ int remove_all_substring_occurences(char *string, const char *find){
 			return 0;
 
 	}
+
+}
+
+#pragma endregion
+
+#pragma region Logging
+
+int init_logger(LOGGER **logger, const char *filename){
+
+	// Verify arguments
+	if (filename == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
+
+	// Allocate logger
+	if (*logger != NULL)
+		free(*logger);
+	*logger = (LOGGER *)malloc(sizeof(LOGGER));
+	if (*logger == NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+
+	// Create file
+	(*logger)->handle = fopen(filename, "a");
+	if ((*logger)->handle == NULL){
+		free(*logger);
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FILE;
+	}
+
+	// Return
+	return 0;
+
+}
+
+int log_message(LOGGER *logger, const char *message){
+
+	time_t now;
+	char *formatted_time;
+
+	// Verify arguments
+	if (logger == NULL || message == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
+
+	// Get formatted time
+	now = time(0);
+	formatted_time = ctime(&now);
+
+	// Print in file
+	fprintf(logger->handle, "[+] %s: %s\n", formatted_time, message);
+
+	// Return
+	return 0;
+
+}
+
+int free_logger(LOGGER **logger){
+
+	if (*logger != NULL){
+		free(*logger);
+		*logger = NULL;
+	}
+
+	// Return
+	return 0;
 
 }
 

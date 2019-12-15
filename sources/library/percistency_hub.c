@@ -122,7 +122,7 @@ int free_module_wallet(MODULE_WALLET **wallet){
 		free(*wallet);
 		*wallet = NULL;
 	}
-	
+
 	// Return
 	return 0;
 

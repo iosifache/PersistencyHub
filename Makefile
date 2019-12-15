@@ -81,6 +81,6 @@ clean:
 	rm -f $(FOLDER_OBJECTS)/$(FOLDER_LIBRARY)/*
 	rm -f $(FOLDER_OBJECTS)/$(FOLDER_MODULES)/*
 	rm -f $(FOLDER_OBJECTS)/$(FOLDER_TEST)/*
-	rm -f $(TEST_NAME)
+	rm -f $(TEST_NAME)*
 	rm -f .gdb_history
 	rm -f peda-session-$(TEST_NAME).txt

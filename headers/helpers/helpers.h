@@ -4,6 +4,7 @@
 
 #pragma region RequiredLibraries
 
+	#include <stdio.h>
 	#include "platform_dependent.h"
 
 #pragma endregion
@@ -17,11 +18,19 @@
 
 #pragma endregion
 
+#pragma region Structures
+
+	typedef struct{
+		FILE *handle;
+	} LOGGER;
+
+#pragma endregion
+
 #pragma region ExportedFunctions
 
 	#pragma region System
 
-	/**	
+	/**
 	 * @brief Get details about system
 	 * 
 	 * @param detail The specifier about what information is needed
@@ -158,6 +167,36 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int remove_all_substring_occurences(char *string, const char *find);
+
+	#pragma endregion
+
+	#pragma region Logging
+
+	/**
+	 * @brief Create a new logger, having attached a file with the given name
+	 * 
+	 * @param logger The location where logger will be saved
+	 * @param filename The name of the file where messages are logged
+	 * @return int Zero on success and non-zero if error
+	 */
+	int init_logger(LOGGER **logger, const char *filename);
+
+	/**
+	 * @brief Log a message
+	 * 
+	 * @param logger The already created logger
+	 * @param message The message that will be logged
+	 * @return int Zero on success and non-zero if error
+	 */
+	int log_message(LOGGER *logger, const char *message);
+
+	/**
+	 * @brief Close a logger
+	 * 
+	 * @param logger The already created logger
+	 * @return int Zero on success and non-zero if error
+	 */
+	int free_logger(LOGGER **logger);
 
 	#pragma endregion
 

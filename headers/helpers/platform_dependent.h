@@ -134,7 +134,7 @@
 	 * @return int Negative if privilege isn't valid or posivive(and zero) if is valid
 	 */
 	int _has_privilege(const char *path, PRIVILEGE priv);
-	
+
 	#pragma endregion
 
 #pragma endregion

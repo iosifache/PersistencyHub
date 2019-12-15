@@ -31,7 +31,7 @@ extern int is_compatible(ENVIRONMENT *env){
 		// Get privileges
 		ret_val = has_privilege(target_file_path, WRITE);
 
-		// Free the path and check the privileges 
+		// Free the path and check the privileges
 		free(target_file_path);
 		target_file_path = NULL;
 		if (ret_val >= 0)
