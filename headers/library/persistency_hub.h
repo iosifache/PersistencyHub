@@ -1,6 +1,6 @@
-#ifndef _PERCISTENCY_HUB
+#ifndef _PERSISTENCY_HUB
 
-#define _PERCISTENCY_HUB
+#define _PERSISTENCY_HUB
 
 #pragma region Configuration
 

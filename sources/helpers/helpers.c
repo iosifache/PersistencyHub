@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/utsname.h>
-#include "../../headers/library/percistency_hub.h"
+#include "../../headers/library/persistency_hub.h"
 #include "../../headers/helpers/helpers.h"
 #include "../../headers/errors.h"
 

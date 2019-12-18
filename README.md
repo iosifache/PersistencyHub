@@ -1,16 +1,16 @@
-# PercistencyHub
+# PersistencyHub
 
-**PercistencyHub** is a cross-platform library to help malware to set persistency in `Windows` and `Linux`, using platform-specific methods.
+**PersistencyHub** is a cross-platform library to help malware to set persistency in `Windows` and `Linux`, using platform-specific methods.
 
 ### Main Idea
-The leading concept and, in the same time, the *buzzword* used in this project, is a **module**. Basically, it is a method used by a malicious program to set percistency on a machine.
-There are two approches that can be used:
+The leading concept and, at the same time, the *buzzword* used in this project, is a **module**. Basically, it is a method used by a malicious program to set persistency on a machine.
+Two approaches can be used:
 - **targetted attacks**
   - the specifications of the machine and the runway are known before the attack begins
-  - the environment of the library can be setted and a specific module can be used, having big changes to succeed
+  - the environment of the library can be set and a specific module can be used, having big changes to succeed
 - **unpredictable attacks**
-  - the specifications of the machine and the runway are not known before the attacks begins
-  - the environment of the library can not be setted and the malicious programs need to try more modules in order to achieve percisteny
+  - the specifications of the machine and the runway are not known before the attack begins
+  - the environment of the library can not be set and the malicious programs need to try more modules to achieve persistency
 
 ### Runway of an Attack
 
@@ -26,7 +26,7 @@ There are two approches that can be used:
                      v
       +--------------+-----------------+
       |                                |
-      |  Init the PercistencyHub by    |
+      |  Init the PersistencyHub by    |
       |  (auto)setting the environment |
       |                                |
       +--------------+-----------------+
@@ -45,7 +45,7 @@ There are two approches that can be used:
       +--------------+-------------+
       |                            |
       | If compatible, exploit and |
-      | gain percistency           |
+      | gain persistency           |
       |                            |
       +--------------+-------------+
                      |
@@ -53,8 +53,8 @@ There are two approches that can be used:
                      v
           +----------+----------+                +-----------------------------+
           |                     +--------------->+                             |
-          | Exploit the machine |                | In case of restart,         |
-          | for fun and profit  |                | the malware will be reruned |
+          | Exploit the machine |                | In case of a restart,       |
+          | for fun and profit  |                | the malware will be re-run  |
           |                     +<---------------+                             |
           +----------+----------+                +-----------------------------+
                      |
@@ -62,7 +62,7 @@ There are two approches that can be used:
                      v
 +--------------------+------------------+
 |                                       |
-| When done, delete the percistency and |
+| When done, delete the persistence and |
 | the software itself                   |
 |                                       |
 +---------------------------------------+
@@ -97,7 +97,7 @@ There are two approches that can be used:
                                                   v
                                 +-----------------+-----------------+
                                 |                                   |
-                                |          PercistencyHub           |
+                                |          PersistencyHub           |
                                 |                                   |
                                 | +-------------------------------+ |
                                 | |                               | |
@@ -128,7 +128,7 @@ There are two approches that can be used:
 .
 ├── build                Directory containing the executables and the libraries(static and dynamic)
 ├── headers              Directory containing the headers
-├── Makefile             Build rules for project, Linux-only in this moment
+├── Makefile             Build rules for the project, Linux-only at this moment
 ├── objects              Directory containing the object files
 ├── README.md            This document
 └── sources              Directory containing the C sources

@@ -24,7 +24,7 @@ OBJECTS_HELPERS = $(patsubst $(FOLDER_SOURCES)/%.c, $(FOLDER_OBJECTS)/%.o, $(SOU
 OBJECTS_LIBRARY = $(patsubst $(FOLDER_SOURCES)/%.c, $(FOLDER_OBJECTS)/%.o, $(SOURCES_LIBRARY))
 MODULES = $(patsubst $(FOLDER_SOURCES)/%.c, $(FOLDER_BUILD)/%.so, $(SOURCES_MODULES))
 HELPERS_NAME = helpers.lib
-LIBRARY_NAME = percistency_hub.lib
+LIBRARY_NAME = persistency_hub.lib
 TEST_NAME = malware
 
 # Special targets
