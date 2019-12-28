@@ -1,6 +1,6 @@
 # Compiler and flags
 COMPILER = gcc
-COMPILER_FLAGS = -Wall -std=c99 -g
+COMPILER_FLAGS = -Wall -std=c99 -g -D_POSIX_SOURCE
 COMPILER_LIBRARY_FLAGS = -ldl
 COMPILER_ILLEGAL_FLAGS = -Wno-unknown-pragmas
 COMPILER_DYNAMIC_LIB_FLAGS = -shared -fPIC

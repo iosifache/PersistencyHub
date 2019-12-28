@@ -26,7 +26,7 @@
 
 #pragma endregion
 
-#pragma region ExportedFunctions
+#pragma region FunctionDeclarations
 
 	#pragma region System
 
@@ -54,6 +54,15 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int get_executable_path(char **path);
+
+	/**
+	 * @brief Execute a command and get its output
+	 * 
+	 * @param command Command to be executed
+	 * @param output The location where the output will be saved
+	 * @return int Zero if success, non-zero if error
+	 */
+	int execute_command(char *command, char **output);
 
 	#pragma endregion
 

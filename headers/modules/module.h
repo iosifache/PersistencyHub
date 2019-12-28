@@ -6,7 +6,7 @@
 
 #pragma endregion
 
-#pragma region ExportedFunctions
+#pragma region FunctionDeclarations
 
 	/**
 	 * @brief Check the compatibility of the module

