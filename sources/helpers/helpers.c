@@ -7,9 +7,9 @@
 	#include <dirent.h>
 	#include <unistd.h>
 	#include <sys/utsname.h>
-	#include "../../headers/library/persistency_hub.h"
 	#include "../../headers/helpers/helpers.h"
-	#include "../../headers/errors.h"
+	#include "../../headers/library/persistency_hub.h"
+	#include "../../headers/errors/codes.h"
 
 #pragma endregion
 
@@ -73,6 +73,13 @@ int get_system_details(SYSTEM_DETAILS detail, void *result){
 
 }
 
+int get_username(char **username){
+
+	// Return
+	return _get_username(username);
+
+}
+
 int get_user_home_directory(char **path){
 
 	// Return
@@ -89,12 +96,26 @@ int get_executable_path(char **path){
 
 int execute_command(char *command, char **output){
 
-	// Allocate the output
-	*output = (char *)malloc(COMMAND_MAX_SIZE * sizeof(char));
-	if (*output != NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+	int ret_val;
 
-	return _execute_command(command ,*output);
+	// Check arguments
+	if (command == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
+
+	// Allocate the output
+	*output = (char *)calloc(1, COMMAND_MAX_SIZE * sizeof(char));
+	if (*output == NULL)
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
+
+	// Execute command
+	ret_val = _execute_command(command, *output);
+	if (ret_val){
+		free(*output);
+		*output = NULL;
+	}
+
+	// Return
+	return ret_val;
 
 }
 
@@ -104,14 +125,14 @@ int execute_command(char *command, char **output){
 
 int load_library(const char *lib_name, void **handle){
 
-	// Free the handle if exists
-	if (*handle != NULL)
-		free(*handle);
+	// Check arguments
+	if (lib_name == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
 
 	// Open the library and check the operation
 	_load_library(lib_name, handle);
 	if (*handle == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_LOAD_LIB;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_LOAD_LIB;
 
 	// Return
 	return 0;
@@ -122,14 +143,14 @@ int get_function_pointer(void *handle, const char *func_name, FUNC_PTR *func_ptr
 
 	char *error = NULL;
 
-	// Checl arguments
+	// Check arguments
 	if (handle == NULL || func_name == NULL)
 		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
 
 	// Get a pointer to function
 	_get_function_pointer(handle, func_name, func_ptr, error);
 	if (error != NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_FIND_FUNC;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_FIND_FUNC;
 
 	// Return
 	return 0;
@@ -161,10 +182,12 @@ int get_all_files_from_folder(const char *path_to_folder, int *file_count, char 
 	// Allocate the filenames array
 	*filenames = (char **)calloc(1, max_files * sizeof(char *));
 	if (*filenames == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
 
 	// Open folder
 	ret_val = _get_all_files_from_folder(path_to_folder, file_count, *filenames, max_files, extension);
+	if (ret_val)
+		free(filenames);
 
 	// Return
 	return ret_val;
@@ -173,11 +196,13 @@ int get_all_files_from_folder(const char *path_to_folder, int *file_count, char 
 
 int get_parent_folder_path(char *file_path){
 
+	char path_separator;
 	int i, length;
 
+	path_separator = PATH_SEPARATOR[0];
 	length = strlen(file_path);
 	for (i = length - 1; i >= 0; i--)
-		if (file_path[i] == PATH_SEPARATOR[0]){
+		if (file_path[i] == path_separator){
 			file_path[i] = '\0';
 			break;
 		}
@@ -203,10 +228,6 @@ int concat_path_with_filename(char **full_path, const char *parent_folder, const
 	if (parent_folder == NULL || filename == NULL)
 		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
 
-	// Free if already allocated
-	if (*full_path != NULL)
-		free(*full_path);
-
 	// Construct path
 	copy_string(full_path, parent_folder, strlen(filename) + 1);
 	strcat(*full_path, PATH_SEPARATOR);
@@ -218,6 +239,9 @@ int concat_path_with_filename(char **full_path, const char *parent_folder, const
 }
 
 int has_privilege(const char *path, PRIVILEGE priv){
+
+	if (path == NULL)
+		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
 
 	// Return
 	return _has_privilege(path, priv);
@@ -235,7 +259,7 @@ int create_file(const char *path, const char *content){
 	// Create file
 	file = fopen(path, "w");
 	if (file == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FILE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_OPEN_FILE;
 
 	// Write content and close
 	fwrite(content, strlen(content), 1, file);
@@ -249,31 +273,40 @@ int create_file(const char *path, const char *content){
 int get_file_content(const char *path, char **buffer){
 
 	FILE *file;
+	int ret_val = 0;
 	int length;
 
 	// Verify arguments
 	if (path == NULL)
 		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
-	if (*buffer != NULL)
-		free(*buffer);
 
 	// Open file
 	file = fopen(path, "r");
 	if (file == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FILE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_OPEN_FILE;
 
 	// Get file size
 	fseek(file, 0, SEEK_END);
 	length = ftell(file);
 
 	// Allocate buffer
-	*buffer = (char *)malloc((length + 1) * sizeof(char));
-	fseek(file, 0, SEEK_SET);
-	fread(*buffer, length, 1, file);
-	(*buffer)[length] = '\0';
+	*buffer = (char *)calloc(1, (length + 1) * sizeof(char));
+	if (*buffer == NULL)
+		ret_val = ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
+	else{
+
+		// Get content
+		fseek(file, 0, SEEK_SET);
+		ret_val = fread(*buffer, length, 1, file);
+		(*buffer)[length] = '\0';
+
+	}
+
+	// Close opened file
+	fclose(file);
 
 	// Return
-	return 0;
+	return ret_val;
 
 }
 
@@ -284,11 +317,9 @@ int get_file_content(const char *path, char **buffer){
 int copy_string(char **dest, const char *src, int surplus){
 
 	// Allocate the destination
-	if (*dest != NULL)
-		free(dest);
 	*dest = (char *)calloc(1, (strlen(src) + surplus + 1) * sizeof(char));
 	if (dest == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
 
 	// Copy string
 	strcpy(*dest, src);
@@ -324,24 +355,22 @@ int remove_all_substring_occurences(char *string, const char *find){
 
 #pragma region Logging
 
-int init_logger(LOGGER **logger, const char *filename){
+int open_log_file(FILE **logger, const char *filename){
 
 	// Verify arguments
 	if (filename == NULL)
 		return ERROR_PROGRAMMING_INVALID_ARGUMENT;
 
 	// Allocate logger
-	if (*logger != NULL)
-		free(*logger);
-	*logger = (LOGGER *)malloc(sizeof(LOGGER));
+	*logger = (FILE *)calloc(1, sizeof(FILE *));
 	if (*logger == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
 
 	// Create file
-	(*logger)->handle = fopen(filename, "a");
-	if ((*logger)->handle == NULL){
+	*logger = fopen(filename, "a");
+	if (*logger == NULL){
 		free(*logger);
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FILE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_OPEN_FILE;
 	}
 
 	// Return
@@ -349,10 +378,11 @@ int init_logger(LOGGER **logger, const char *filename){
 
 }
 
-int log_message(LOGGER *logger, const char *message){
+int write_log_message(FILE *logger, const char *message){
 
 	time_t now;
 	char *formatted_time;
+	int length;
 
 	// Verify arguments
 	if (logger == NULL || message == NULL)
@@ -361,20 +391,22 @@ int log_message(LOGGER *logger, const char *message){
 	// Get formatted time
 	now = time(0);
 	formatted_time = ctime(&now);
+	length = strlen(formatted_time);
+	if (formatted_time[length - 1] == '\n')
+		formatted_time[length - 1] = '\0';
 
 	// Print in file
-	fprintf(logger->handle, "[+] %s: %s\n", formatted_time, message);
+	fprintf(logger, "[+] %s: %s\n", formatted_time, message);
 
 	// Return
 	return 0;
 
 }
 
-int free_logger(LOGGER **logger){
+int free_log_file(FILE *logger){
 
-	if (*logger != NULL){
-		free(*logger);
-		*logger = NULL;
+	if (logger != NULL){
+		fclose(logger);
 	}
 
 	// Return

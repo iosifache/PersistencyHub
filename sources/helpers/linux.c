@@ -2,6 +2,7 @@
 
 #pragma region RequiredLibraries
 
+	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
 	#include <dlfcn.h>
@@ -13,7 +14,7 @@
 	#include <sys/utsname.h>
 	#include "../../headers/helpers/platform_dependent.h"
 	#include "../../headers/helpers/helpers.h"
-	#include "../../headers/errors.h"
+	#include "../../headers/errors/codes.h"
 
 #pragma endregion
 
@@ -43,22 +44,44 @@ int _is_root(){
 
 }
 
-int _get_user_home_directory(char **path){
+int _get_user_detail(USER_INFO requested, char **storage){
 
 	uid_t uid;
 	struct passwd *pw;
+	char *info = NULL;
+	int ret_val;
 
 	// Get path for UID
 	uid = getuid();
 	pw = getpwuid(uid);
 	if (pw == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_GET_INFO;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_GET_INFO;
 
 	// Copy the path and free the allocated structure
-	copy_string(path, pw->pw_dir, 0);
+	switch (requested){
+		case USERNAME:
+			info = pw->pw_name;
+			break;
+		case HOME_PATH:
+			info = pw->pw_dir;
+			break;
+	}
+	ret_val = copy_string(storage, info, 0);
 
 	// Return
-	return 0;
+	return ret_val;
+
+}
+
+int _get_username(char **username){
+
+	return _get_user_detail(USERNAME, username);
+
+}
+
+int _get_user_home_directory(char **path){
+
+	return _get_user_detail(HOME_PATH, path);
 
 }
 
@@ -67,16 +90,14 @@ int _get_executable_path(char **buffer){
 	int path_length;
 
 	// Allocate buffer
-	if (*buffer != NULL)
-		free(*buffer);
-	*buffer = (char *)malloc(MAX_PATH_LENGTH);
+	*buffer = (char *)calloc(1, MAX_PATH_LENGTH);
 	if (*buffer == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_ALLOCATE;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_ALLOCATE;
 
 	// Get path
 	path_length = readlink(SELF_EXECUTABLE_PATH, *buffer, MAX_PATH_LENGTH);
 	if (path_length < 0)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_GET_INFO;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_GET_INFO;
 	(*buffer)[path_length] = '\0';
 
 	// Return
@@ -87,12 +108,17 @@ int _get_executable_path(char **buffer){
 int _execute_command(char *command, char *output){
 
 	FILE *pipe;
+	char *new_command;
 	char buffer[LINE_BUFFER_SIZE];
 
+	// Get the new command
+	copy_string(&new_command, command, strlen(STDERR_TO_STDOUT) + 1);
+	strcat(new_command, STDERR_TO_STDOUT);
+
 	// Open the command for reading
-	pipe = popen(command, "r");
+	pipe = popen(new_command, "r");
 	if (pipe == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_RUN_COMMAND;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_RUN_COMMAND;
 
 	// Read the output a line at a time
 	while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
@@ -101,6 +127,9 @@ int _execute_command(char *command, char *output){
 
 	// Close
 	pclose(pipe);
+
+	// Free
+	free(new_command);
 
 	// Return
 	return 0;
@@ -135,7 +164,7 @@ int _get_function_pointer(void *handle, const char *func_name, FUNC_PTR *func_pt
 int _unlink_library(void **handle){
 
 	// Close library handle
-	dlclose(*handle);
+	dlclose(handle);
 	*handle = NULL;
 
 	// Return
@@ -154,7 +183,7 @@ int _change_working_directory(const char *path){
 	// Change directory
 	ret_val = chdir(path);
 	if (ret_val == -1)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FOLDER;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_CHANGE_DIR;
 
 	// Return
 	return 0;
@@ -172,7 +201,7 @@ int _get_all_files_from_folder(const char *path_to_folder, int *file_count, char
 	// Open folder
 	folder = opendir(path_to_folder);
 	if (folder == NULL)
-		return ERROR_OPERAING_SYSTEM_UNABLE_TO_OPEN_FOLDER;
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_OPEN_FOLDER;
 
 	// Get extension length
 	if (extension != NULL)
@@ -236,7 +265,9 @@ int _has_privilege(const char *path, PRIVILEGE priv){
 	}
 
 	// Check privileges and return
-	return access(path, mode);
+	int ret;
+	ret = access(path, mode);
+	return (ret == 0);
 
 }
 

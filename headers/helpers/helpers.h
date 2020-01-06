@@ -18,14 +18,6 @@
 
 #pragma endregion
 
-#pragma region Structures
-
-	typedef struct{
-		FILE *handle;
-	} LOGGER;
-
-#pragma endregion
-
 #pragma region FunctionDeclarations
 
 	#pragma region System
@@ -38,6 +30,14 @@
 	 * @return int Zero if success, non-zero if error
 	 */
 	int get_system_details(SYSTEM_DETAILS detail, void *result);
+
+	/**
+	 * @brief Get the username under which the program is runned
+	 * 
+	 * @param username THe location where the username will be saved
+	 * @return int Zero if success, non-zero if error
+	 */
+	int get_username(char **username);
 
 	/**
 	 * @brief Get the home path of the current user
@@ -133,7 +133,7 @@
 	 * @param parent_folder The parent folder of the file
 	 * @param filename The target filename
 	 * @return int Zero if success, non-zero if error
-	 */ 
+	 */
 	int concat_path_with_filename(char **full_path, const char *parent_folder, const char *filename);
 
 	/**
@@ -197,7 +197,7 @@
 	 * @param filename The name of the file where messages are logged
 	 * @return int Zero on success and non-zero if error
 	 */
-	int init_logger(LOGGER **logger, const char *filename);
+	int open_log_file(FILE **logger, const char *filename);
 
 	/**
 	 * @brief Log a message
@@ -206,7 +206,7 @@
 	 * @param message The message that will be logged
 	 * @return int Zero on success and non-zero if error
 	 */
-	int log_message(LOGGER *logger, const char *message);
+	int write_log_message(FILE *logger, const char *message);
 
 	/**
 	 * @brief Close a logger
@@ -214,7 +214,7 @@
 	 * @param logger The already created logger
 	 * @return int Zero on success and non-zero if error
 	 */
-	int free_logger(LOGGER **logger);
+	int free_log_file(FILE *logger);
 
 	#pragma endregion
 

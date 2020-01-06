@@ -2,23 +2,18 @@
 
 #define _PLATFORM_DEPENDENT
 
-#pragma region RequiredLibraries
-
-	#include "../library/persistency_hub.h"
-
-#pragma endregion
-
 #pragma region Configuration
 
 	#define        COMMAND_MAX_SIZE                  128
 	#define        LINE_BUFFER_SIZE                  64
+	#define        MAX_PATH_LENGTH                   64
 
 	#ifdef __linux__
 
 		#define        PATH_SEPARATOR                    "/"
-		#define        MAX_PATH_LENGTH                   64
 		#define        DT_REG                            8
 		#define        SELF_EXECUTABLE_PATH              "/proc/self/exe"
+		#define        STDERR_TO_STDOUT                  " 2>&1 "
 
 	#elif _WIN32
 
@@ -40,11 +35,16 @@
 		EXECUTE
 	} PRIVILEGE;
 
+	typedef enum{
+		USERNAME,
+		HOME_PATH
+	} USER_INFO;
+
 #pragma endregion
 
 #pragma region TypeDefs
 
-	typedef                 int (*FUNC_PTR)(ENVIRONMENT *);
+	typedef                 int (*FUNC_PTR)(void *);
 
 #pragma endregion
 
@@ -65,6 +65,14 @@
 	 * @return int Zero if not root, non-zero if root
 	 */
 	int _is_root();
+
+	/**
+	 * @brief Get the username
+	 * 
+	 * @param username The username
+	 * @return int Zero if not root, non-zero if root
+	 */
+	int _get_username(char **username);
 
 	/**
 	 * @brief Get the home path of the current user
